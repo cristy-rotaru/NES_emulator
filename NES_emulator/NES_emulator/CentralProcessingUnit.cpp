@@ -132,6 +132,7 @@ static uint8_t CPU_registerA;
 static uint8_t CPU_registerX;
 static uint8_t CPU_registerY;
 static uint8_t CPU_flags;
+static uint8_t CPU_interruptRequests;
 
 #define CPU__stack_push(data) MB::writeMainBus(CPU_registerSP-- | 0x0100, (uint8_t)(data))
 #define CPU__stack_pop() MB::readMainBus(++CPU_registerSP | 0x0100)
@@ -154,10 +155,17 @@ namespace CPU
 		CPU_registerY = 0x00;
 
 		CPU_flags = CPU__FLAG_DEFAULT_HIGH | CPU__FLAG_INHIBIT;
+
+		CPU_interruptRequests = INTERRUPT_SOURCE_NONE;
 	}
 
 	void step()
 	{
+		if (CPU_interruptRequests != INTERRUPT_SOURCE_NONE)
+		{
+			CPU::causeInterrupt(INTERRUPT_IRQ);
+		}
+
 		if (--CPU_cyclesToSkip)
 		{
 			return;
@@ -1078,9 +1086,19 @@ namespace CPU
 		}
 	}
 
+	void pullInterruptPin(uint8_t source)
+	{
+		CPU_interruptRequests |= source;
+	}
+
+	void releaseInterruptPin(uint8_t source)
+	{
+		CPU_interruptRequests &= ~source;
+	}
+
 	void causeInterrupt(uint8_t interrupt)
 	{
-		if ((CPU_flags & CPU__FLAG_INHIBIT) && (interrupt != INTERRUPT_NMI) && (interrupt != INTERRUPT_BRK))
+		if ((CPU_flags & CPU__FLAG_INHIBIT) && (interrupt == INTERRUPT_IRQ))
 		{
 			return;
 		}

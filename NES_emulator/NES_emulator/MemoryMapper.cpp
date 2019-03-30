@@ -296,7 +296,7 @@ namespace MM
 
 							if (MM_parameters.MapperMMC3.enableIRQ)
 							{
-								CPU::causeInterrupt(INTERRUPT_IRQ);
+								CPU::pullInterruptPin(INTERRUPT_SOURCE_MM);
 							}
 						}
 					}
@@ -1007,6 +1007,7 @@ void Mapper_MMC3__writePRG(uint16_t address, uint8_t data)
 		if (address & 1)
 		{ // IRQ reload request register
 			MM_parameters.MapperMMC3.counterReload = true;
+			CPU::releaseInterruptPin(INTERRUPT_SOURCE_MM);
 		}
 		else
 		{ // IRQ reset counter value register
@@ -1022,6 +1023,7 @@ void Mapper_MMC3__writePRG(uint16_t address, uint8_t data)
 		else
 		{ // IRQ disable register
 			MM_parameters.MapperMMC3.enableIRQ = false;
+			CPU::releaseInterruptPin(INTERRUPT_SOURCE_MM);
 		}
 	}
 }

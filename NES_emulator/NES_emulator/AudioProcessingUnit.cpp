@@ -301,11 +301,6 @@ namespace APU
 	{
 		++APU_cycleCount;
 
-		if (APU_requestFrameIRQ || APU_requetsDMCIRQ)
-		{
-			CPU::causeInterrupt(INTERRUPT_IRQ);
-		}
-
 		if (APU_cycleCount == APU__SEQUENCE_STEP1)
 		{
 			APU_envelope__step();
@@ -338,6 +333,7 @@ namespace APU
 				if (APU_enableInterrupt)
 				{
 					APU_requestFrameIRQ = true;
+					CPU::pullInterruptPin(INTERRUPT_SOURCE_APU);
 				}
 
 				APU_cycleCount = 0;
@@ -662,6 +658,8 @@ namespace APU
 		{
 			APU_requestFrameIRQ = false;
 			APU_requetsDMCIRQ = false;
+
+			CPU::releaseInterruptPin(INTERRUPT_SOURCE_APU);
 		}
 
 		if (APU__SEQUENCE_STEP4 < APU_cycleCount)
@@ -707,6 +705,8 @@ namespace APU
 
 		APU_requetsDMCIRQ = false;
 		APU_requestFrameIRQ = false;
+
+		CPU::releaseInterruptPin(INTERRUPT_SOURCE_APU);
 
 		if (APU_Pulse1_lengthCounter)
 		{
