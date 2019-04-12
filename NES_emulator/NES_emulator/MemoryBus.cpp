@@ -578,10 +578,7 @@ namespace MB
 		else if (address < 0x3F00) // here
 		{
 			uint8_t index = (address - 0x2000) / 0x0400;
-			if (index > 3)
-			{
-				index = 3;
-			}
+			index %= 4;
 
 			MB_vRAM[MB_nameTable[index] + (address & 0x03FF)] = data;
 		}
@@ -607,10 +604,7 @@ namespace MB
 		else if (address < 0x3F00) // here
 		{
 			uint8_t index = (address - 0x2000) / 0x0400;
-			if (index > 3)
-			{
-				index = 3;
-			}
+			index %= 4;
 
 			return (MB_vRAM[MB_nameTable[index] + (address & 0x03FF)]);
 		}

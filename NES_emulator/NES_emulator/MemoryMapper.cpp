@@ -214,6 +214,8 @@ namespace MM
 				MM_busFunctions.writeCHR = Mapper_UNROM__writeCHR;
 				MM_busFunctions.readCHR = Mapper_UNROM__readCHR;
 
+				MM_nameTableMirroring = CR::getNameTableMirroring();
+
 				MM_parameters.MapperUNROM.bankCount = CR::getROMBankCount();
 
 				if (CR::getVROMBankCount())
@@ -242,6 +244,8 @@ namespace MM
 				MM_busFunctions.writeCHR = Mapper_CNROM__writeCHR;
 				MM_busFunctions.readCHR = Mapper_CNROM__readCHR;
 
+				MM_nameTableMirroring = CR::getNameTableMirroring();
+
 				MM_parameters.MapperCNROM.bankCount = CR::getROMBankCount();
 				MM_parameters.MapperCNROM.selectedBank = 0;
 
@@ -254,6 +258,8 @@ namespace MM
 				MM_busFunctions.readPRG = Mapper_MMC3__readPRG;
 				MM_busFunctions.writeCHR = Mapper_MMC3__writeCHR;
 				MM_busFunctions.readCHR = Mapper_MMC3__readCHR;
+
+				MM_nameTableMirroring = CR::getNameTableMirroring();
 
 				MM_parameters.MapperMMC3.PRGbankFixed0 = &CR::getROM()[(CR::getROMBankCount() - 1) * 0x4000];
 				MM_parameters.MapperMMC3.PRGbankFixed1 = &MM_parameters.MapperMMC3.PRGbankFixed0[0x2000];

@@ -99,7 +99,7 @@ void AD_SDL__callback(void *userData, uint8_t *stream, int len)
 
 	if (AD_samplesInBuffer < len / 2)
 	{
-		debug(AD_samplesInBuffer << " " << len, DEBUG_LEVEL_INFO);
+		//debug(AD_samplesInBuffer << " " << len, DEBUG_LEVEL_INFO);
 	}
 
 	memcpy(stream, AD_sampleBuffer, len);
