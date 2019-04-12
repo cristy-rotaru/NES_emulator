@@ -26,6 +26,8 @@
 #define PPU__BITS_HORIZONTAL (0x041Fu)
 #define PPU__BITS_VERTICAL (0x7BE0u)
 
+inline uint32_t PPU_color__convertToGrayScale(uint32_t color);
+
 static const uint32_t PPU_colorsNTSC[] = // to RGBA
 { // 64 colors
 	0x717171FFu, 0x0018D3FFu, 0x0704B0FFu, 0x4110B0FFu,	0x7D0082FFu, 0x820030FFu, 0x820A00FFu, 0x6A1900FFu,
@@ -50,7 +52,7 @@ static const uint32_t PPU_colorsPAL[] = // to RGBA
 	0xFFF0A8FFu, 0xE0FAAAFFu, 0xBFFCBCFFu, 0xADFEDDFFu, 0xACFAFFFFu, 0xC6C6C6FFu, 0x000000FFu, 0x000000FFu
 };
 
-static const uint32_t *PPU_palleteInUse;
+static const uint32_t *PPU_paletteInUse;
 
 static uint8_t PPU_spriteMemory[256];
 static uint8_t PPU_scanlineSprites[8];
@@ -119,11 +121,11 @@ namespace PPU
 
 		if (CR::getSystemType() == SYSTEM_NTSC)
 		{
-			PPU_palleteInUse = PPU_colorsNTSC;
+			PPU_paletteInUse = PPU_colorsNTSC;
 		}
 		else
 		{
-			PPU_palleteInUse = PPU_colorsPAL;
+			PPU_paletteInUse = PPU_colorsPAL;
 		}
 	}
 
@@ -290,8 +292,13 @@ namespace PPU
 						paletteAddress = 0;
 					}
 
-					//PPU_imageBuffer[x][y] = PPU_colorsNTSC[MB::readPictureBus((uint16_t)paletteAddress | 0x3F20)];
-					RW::setPixel(x, y, PPU_palleteInUse[MB::readPictureBus((uint16_t)paletteAddress | 0x3F20)]);
+					uint32_t colorToDisplay = PPU_paletteInUse[MB::readPictureBus((uint16_t)paletteAddress | 0x3F20)];
+					if (PPU_grayscaleMode)
+					{
+						colorToDisplay = PPU_color__convertToGrayScale(colorToDisplay);
+					}
+
+					RW::setPixel(x, y, colorToDisplay);
 				}
 				else if (PPU_cycle == PPU__SCANLINE_DOTS + 1 && PPU_showBackground)
 				{
@@ -543,4 +550,26 @@ namespace PPU
 			}
 		}
 	}
+}
+
+inline uint32_t PPU_color__convertToGrayScale(uint32_t color)
+{
+	uint16_t average = 0;
+	uint8_t mod;
+
+	average += (color & 0xFF000000) >> 24;
+	average += (color & 0x00FF0000) >> 16;
+	average += (color & 0x0000FF00) >> 8;
+
+	mod = average % 3;
+	average /= 3;
+
+	if (mod == 2)
+	{
+		++average;
+	}
+
+	uint8_t gray = (uint8_t)average;
+
+	return (gray << 24) | (gray << 16) | (gray << 8) | 0xFF;
 }
