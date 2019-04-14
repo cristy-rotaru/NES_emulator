@@ -507,13 +507,9 @@ namespace MB
 				case MB__REGISTER_APU_DMC_RAW:
 				case MB__REGISTER_APU_DMC_START:
 				case MB__REGISTER_APU_DMC_LENGTH:
-				{ // sound registers ... TBD
-					return (0x00);
-				}
-
 				case MB__REGISTER_PPU_SPRITE_DMA:
 				{
-					return (0x00); // write-only register
+					return (0x00); // write-only registers
 				}
 
 				case MB__REGISTER_APU_CHANNELS:
