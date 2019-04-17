@@ -240,7 +240,7 @@ namespace PPU
 							uint8_t xShift = (x - xSpr) % 8;
 							uint8_t yOffset = (y - ySpr) % length;
 
-							if ((attribute & 0x40) == 0) // if not flipping horozontally
+							if ((attribute & 0x40) == 0) // if not flipping horizontally
 							{
 								xShift ^= 0x07;
 							}
