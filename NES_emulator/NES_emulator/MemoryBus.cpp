@@ -347,10 +347,30 @@ namespace MB
 				}
 
 				case MB__REGISTER_APU_DMC_FREQUENCY:
+				{
+					APU::writeRegisterDMCFrequency(data);
+
+					break;
+				}
+
 				case MB__REGISTER_APU_DMC_RAW:
+				{
+					APU::writeRegisterDMCRaw(data);
+
+					break;
+				}
+
 				case MB__REGISTER_APU_DMC_START:
+				{
+					APU::writeRegisterDMCAddress(data);
+
+					break;
+				}
+
 				case MB__REGISTER_APU_DMC_LENGTH:
-				{ // sound registers ... TBD
+				{
+					APU::writeRegisterDMCLength(data);
+
 					break;
 				}
 

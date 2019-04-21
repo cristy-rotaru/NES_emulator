@@ -8,7 +8,8 @@
 
 #define INTERRUPT_SOURCE_NONE (0x00u)
 #define INTERRUPT_SOURCE_APU (0x01u)
-#define INTERRUPT_SOURCE_MM (0x02u)
+#define INTERRUPT_SOURCE_DMC (0x02u)
+#define INTERRUPT_SOURCE_MM (0x04u)
 
 namespace CPU
 {
@@ -18,4 +19,5 @@ namespace CPU
 	void releaseInterruptPin(uint8_t source);
 	void causeInterrupt(uint8_t interrupt);
 	void skipCyclesForDMA();
+	void skipCyclesForDMCFetch();
 }

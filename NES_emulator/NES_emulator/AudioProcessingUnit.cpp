@@ -3,6 +3,7 @@
 #include "CartridgeReader.h"
 #include "AudioDevice.h"
 #include "CentralProcessingUnit.h"
+#include "MemoryBus.h"
 
 #define APU__SEQUENCE_STEP1 (3728u)
 #define APU__SEQUENCE_STEP2 (7456u)
@@ -41,6 +42,9 @@
 #define APU__PULSE_TIMER_HIGH_SHIFT (0u)
 #define APU__PULSE_LENGTH_COUNTER_LOAD_SHIFT (3u)
 
+#define APU__PULSE_DUTY_CYCLE_COUNT (4u)
+#define APU__PULSE_DUTY_CYCLE_INITIAL_POSITION (0x80u)
+
 #define APU__TRIANGLE_LINEAR_COUNTER_CONTROL_MASK (0x80u)
 #define APU__TRIANGLE_LINEAR_COUNTER_RELOAD_MASK (0x7Fu)
 #define APU__TRIANGLE_TIMER_LOW_MASK (0x00FFu)
@@ -50,6 +54,8 @@
 #define APU__TRIANGLE_LINEAR_COUNTER_RELOAD_SHIFT (0u)
 #define APU__TRIANGLE_TIMER_HIGH_SHIFT (0u)
 #define APU__TRIANGLE_LENGTH_COUNTER_LOAD_SHIFT (3u)
+
+#define APU__TRIANGLE_SEQUENCE_LENGTH (32u)
 
 #define APU__NOISE_LENGTH_COUNTER_HALT_MASK (0x20u)
 #define APU__NOISE_CONSTANT_VOLUME_ENVELOPE_FLAG_MASK (0x10u)
@@ -62,12 +68,19 @@
 #define APU__NOISE_PERIOD_SHIFT (0u)
 #define APU__NOISE_LENGTH_COUNTER_LOAD_SHIFT (3u)
 
-#define APU__PULSE_DUTY_CYCLE_COUNT (4u)
-#define APU__PULSE_DUTY_CYCLE_INITIAL_POSITION (0x80u)
-
-#define APU__TRIANGLE_SEQUENCE_LENGTH (32u)
-
 #define APU__NOISE_TIMER_PERIODS (16u)
+
+#define APU__DMC_ENABLE_IRQ_MASK (0x80u)
+#define APU__DMC_LOOP_MASK (0x40u)
+#define APU__DMC_RATE_MASK (0x0Fu)
+#define APU__DMC_RAW_SAMPLE_MASK (0x7Fu)
+
+#define APU__DMC_RATE_SHIFT (0u)
+#define APU__DMC_RAW_SAMPLE_SHIFT (0u)
+#define APU__DMC_ADDRESS_SHIFT (6u)
+#define APU__DMC_LENGTH_SHIFT (4u)
+
+#define APU__DMC_RATE_VALUES_COUNT (16u)
 
 #define APU__LENGTH_VALUES (32u)
 
@@ -95,6 +108,10 @@ static constexpr uint8_t APU_triangleSequence[APU__TRIANGLE_SEQUENCE_LENGTH] = {
 static const uint16_t APU_noisePeriodsNTSC[APU__NOISE_TIMER_PERIODS] = { 4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068 };
 static const uint16_t APU_noisePeriodsPAL[APU__NOISE_TIMER_PERIODS] = { 4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708,  944, 1890, 3778 };
 static const uint16_t *APU_noisePeriods;
+
+static const uint16_t APU_dmcRateNTSC[APU__DMC_RATE_VALUES_COUNT] = { 214, 190, 170, 160, 143, 127, 113, 107, 95, 80, 71, 64, 53, 42, 36, 27 };
+static const uint16_t APU_dmcRatePAL[APU__DMC_RATE_VALUES_COUNT] = { 199, 177, 158, 149, 138, 118, 105, 99, 88, 74, 66, 59, 49, 38, 33, 25 };
+static const uint16_t *APU_dmcRates;
 
 static uint16_t APU_cycleCount;
 static uint8_t APU_frameSteps;
@@ -182,6 +199,21 @@ static bool APU_Noise_loop;
 static uint8_t APU_Noise_period;
 static uint8_t APU_Noise_lengthCounterLoad;
 
+static uint8_t APU_DMC_selectedRate;
+static bool APU_DMC_enableIRQ;
+static bool APU_DMC_loop;
+static uint16_t APU_DMC_addressStart;
+static uint16_t APU_DMC_sampleLength;
+
+static uint16_t APU_DMC_rateCounter;
+static uint16_t APU_DMC_currentAddress;
+static uint16_t APU_DMC_counter;
+static uint8_t APU_DMC_output;
+static uint16_t APU_DMC_samplesRemaining;
+static bool APU_DMC_stopped;
+static uint8_t APU_DMC_shift;
+static uint8_t APU_DMC_currentSample;
+
 void APU_envelope__step();
 void APU_triangle__step();
 void APU_length__step();
@@ -191,6 +223,23 @@ namespace APU
 {
 	void reset()
 	{
+		if (CR::getSystemType() == SYSTEM_NTSC)
+		{
+			APU_gaussFilterLength = APU__GAUSS_VALUES_COUNT_NTSC;
+			APU_gaussFilterInUse = APU_gaussFilterValuesNTSC;
+
+			APU_noisePeriods = APU_noisePeriodsNTSC;
+			APU_dmcRates = APU_dmcRateNTSC;
+		}
+		else
+		{
+			APU_gaussFilterLength = APU__GAUSS_VALUES_COUNT_PAL;
+			APU_gaussFilterInUse = APU_gaussFilterValuesPAL;
+
+			APU_noisePeriods = APU_noisePeriodsPAL;
+			APU_dmcRates = APU_dmcRatePAL;
+		}
+
 		APU_cycleCount = 0;
 		APU_frameSteps = 4;
 		APU_enableInterrupt = true;
@@ -281,20 +330,17 @@ namespace APU
 		APU_Noise_period = 0;
 		APU_Noise_lengthCounterLoad = 0;
 
-		if (CR::getSystemType() == SYSTEM_NTSC)
-		{
-			APU_gaussFilterLength = APU__GAUSS_VALUES_COUNT_NTSC;
-			APU_gaussFilterInUse = APU_gaussFilterValuesNTSC;
-
-			APU_noisePeriods = APU_noisePeriodsNTSC;
-		}
-		else
-		{
-			APU_gaussFilterLength = APU__GAUSS_VALUES_COUNT_PAL;
-			APU_gaussFilterInUse = APU_gaussFilterValuesPAL;
-
-			APU_noisePeriods = APU_noisePeriodsPAL;
-		}
+		/* DMC */
+		APU_DMC_addressStart = 0xC000;
+		APU_DMC_currentAddress = 0xC000;
+		APU_DMC_counter = 8;
+		APU_DMC_selectedRate = 0;
+		APU_DMC_rateCounter = 1;
+		APU_DMC_sampleLength = 1;
+		APU_DMC_output = 0;
+		APU_DMC_samplesRemaining = 1;
+		APU_DMC_stopped = true;
+		APU_DMC_shift = 0x00;
 	}
 
 	void step()
@@ -415,6 +461,64 @@ namespace APU
 		APU_Noise_timerValue %= APU_noisePeriods[APU_Noise_period];
 
 		/* DMC */
+		if (APU_channelDeltaSignaEnable && !APU_DMC_stopped)
+		{
+			--APU_DMC_rateCounter;
+
+			if (APU_DMC_rateCounter == 0)
+			{
+				APU_DMC_rateCounter = APU_dmcRates[APU_DMC_selectedRate];
+
+				if (APU_DMC_shift == 0)
+				{
+					APU_DMC_currentSample = MB::readMainBus(APU_DMC_currentAddress);
+					CPU::skipCyclesForDMCFetch();
+
+					++APU_DMC_currentAddress;
+					--APU_DMC_samplesRemaining;
+
+					if (APU_DMC_samplesRemaining == 0)
+					{
+						if (APU_DMC_loop)
+						{
+							APU_DMC_samplesRemaining = APU_DMC_sampleLength;
+							APU_DMC_currentAddress = APU_DMC_addressStart;
+						}
+						else
+						{
+							APU_DMC_stopped = true;
+
+							if (APU_DMC_enableIRQ)
+							{
+								APU_requetsDMCIRQ = true;
+								CPU::pullInterruptPin(INTERRUPT_SOURCE_DMC);
+							}
+						}
+					}
+
+					APU_DMC_shift = 0x01;
+				}
+
+				if (APU_DMC_currentSample & APU_DMC_shift)
+				{
+					if (APU_DMC_counter < 126)
+					{
+						APU_DMC_counter += 2;
+					}
+				}
+				else
+				{
+					if (APU_DMC_counter > 1)
+					{
+						APU_DMC_counter -= 2;
+					}
+				}
+
+				APU_DMC_shift <<= 1;
+
+				APU_DMC_output = APU_DMC_counter;
+			}
+		}
 
 		/* Render */
 		float sample = 0.0f;
@@ -509,6 +613,14 @@ namespace APU
 		if (APU_channelNoiseEnable)
 		{
 			sample += sampleNoise * APU__WEIGHT_NOISE;
+		}
+
+		/*DMC render */
+		uint8_t sampleDMC = APU_DMC_output;
+
+		if (APU_channelDeltaSignaEnable)
+		{
+			sample += sampleDMC * APU__WEIGHT_DMC;
 		}
 
 		/* Mixing */
@@ -633,6 +745,39 @@ namespace APU
 		APU_Noise_resetEnvelope = true;
 	}
 
+	void writeRegisterDMCFrequency(uint8_t value)
+	{
+		APU_DMC_enableIRQ = (value & APU__DMC_ENABLE_IRQ_MASK) ? true : false;
+
+		if (APU_DMC_enableIRQ == false)
+		{
+			APU_requetsDMCIRQ = false;
+
+			CPU::releaseInterruptPin(INTERRUPT_SOURCE_DMC);
+		}
+
+		APU_DMC_loop = (value & APU__DMC_LOOP_MASK) ? true : false;
+		APU_DMC_selectedRate = (value & APU__DMC_RATE_MASK) >> APU__DMC_RATE_SHIFT;
+	}
+
+	void writeRegisterDMCRaw(uint8_t value)
+	{
+		if (APU_channelDeltaSignaEnable)
+		{
+			APU_DMC_output = (value & APU__DMC_RAW_SAMPLE_MASK) >> APU__DMC_RAW_SAMPLE_SHIFT;
+		}
+	}
+
+	void writeRegisterDMCAddress(uint8_t value)
+	{
+		APU_DMC_addressStart = 0xC000 | (value << APU__DMC_ADDRESS_SHIFT);
+	}
+
+	void writeRegisterDMCLength(uint8_t value)
+	{
+		APU_DMC_sampleLength = (value << APU__DMC_LENGTH_SHIFT) + 1;
+	}
+
 	void writeRegisterChannels(uint8_t value)
 	{
 		APU_channelPulse1Enable = (value & APU__CHANNEL_PULSE1) ? true : false;
@@ -642,11 +787,25 @@ namespace APU
 		APU_channelDeltaSignaEnable = (value & APU__CHANNEL_DMC) ? true : false;
 
 		APU_requetsDMCIRQ = false;
+		CPU::releaseInterruptPin(INTERRUPT_SOURCE_DMC);
 
 		APU_Pulse1_lengthCounter = 0;
 		APU_Pulse2_lengthCounter = 0;
 		APU_Triangle_lengthCounter = 0;
 		APU_Noise_lengthCounter = 0;
+
+		if (APU_channelDeltaSignaEnable == false)
+		{
+			APU_DMC_stopped = true;
+		}
+		else if (APU_DMC_stopped)
+		{
+			APU_DMC_stopped = false;
+
+			APU_DMC_samplesRemaining = APU_DMC_sampleLength;
+			APU_DMC_currentAddress = APU_DMC_addressStart;
+			APU_DMC_shift = 0x00;
+		}
 	}
 
 	void writeRegisterFrameCounter(uint8_t value)
@@ -657,7 +816,6 @@ namespace APU
 		if (APU_enableInterrupt == false)
 		{
 			APU_requestFrameIRQ = false;
-			APU_requetsDMCIRQ = false;
 
 			CPU::releaseInterruptPin(INTERRUPT_SOURCE_APU);
 		}
@@ -707,6 +865,7 @@ namespace APU
 		APU_requestFrameIRQ = false;
 
 		CPU::releaseInterruptPin(INTERRUPT_SOURCE_APU);
+		CPU::releaseInterruptPin(INTERRUPT_SOURCE_DMC);
 
 		if (APU_Pulse1_lengthCounter)
 		{
@@ -726,6 +885,11 @@ namespace APU
 		if (APU_Noise_lengthCounter)
 		{
 			status |= APU__CHANNEL_NOISE;
+		}
+
+		if (APU_channelDeltaSignaEnable)
+		{
+			status |= APU__CHANNEL_DMC;
 		}
 
 		return status;

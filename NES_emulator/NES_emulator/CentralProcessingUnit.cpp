@@ -134,6 +134,8 @@ static uint8_t CPU_registerY;
 static uint8_t CPU_flags;
 static uint8_t CPU_interruptRequests;
 
+static bool CPU_doingDMA;
+
 #define CPU__stack_push(data) MB::writeMainBus(CPU_registerSP-- | 0x0100, (uint8_t)(data))
 #define CPU__stack_pop() MB::readMainBus(++CPU_registerSP | 0x0100)
 
@@ -154,6 +156,8 @@ namespace CPU
 		CPU_registerX = 0x00;
 		CPU_registerY = 0x00;
 
+		CPU_doingDMA = false;
+
 		CPU_flags = CPU__FLAG_DEFAULT_HIGH | CPU__FLAG_INHIBIT;
 
 		CPU_interruptRequests = INTERRUPT_SOURCE_NONE;
@@ -170,6 +174,8 @@ namespace CPU
 		{
 			return;
 		}
+
+		CPU_doingDMA = false;
 
 		uint8_t opcode = MB::readMainBus(CPU_registerPC);
 		++CPU_registerPC;
@@ -1143,5 +1149,19 @@ namespace CPU
 	void skipCyclesForDMA()
 	{
 		CPU_cyclesToSkip += CPU__DMA_DURATION;
+
+		CPU_doingDMA = true;
+	}
+
+	void skipCyclesForDMCFetch()
+	{
+		if (CPU_doingDMA)
+		{
+			CPU_cyclesToSkip += 2;
+		}
+		else
+		{
+			CPU_cyclesToSkip += 4;
+		}
 	}
 }

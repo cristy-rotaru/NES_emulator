@@ -20,6 +20,10 @@ namespace APU
 	void writeRegisterNoiseVolume(uint8_t value);
 	void writeRegisterNoiseLoop(uint8_t value);
 	void writeRegisterNoiseLength(uint8_t value);
+	void writeRegisterDMCFrequency(uint8_t value);
+	void writeRegisterDMCRaw(uint8_t value);
+	void writeRegisterDMCAddress(uint8_t value);
+	void writeRegisterDMCLength(uint8_t value);
 	void writeRegisterChannels(uint8_t value);
 	void writeRegisterFrameCounter(uint8_t value);
 	uint8_t readRegisterStatus();
