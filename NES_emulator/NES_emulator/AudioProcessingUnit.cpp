@@ -1050,7 +1050,7 @@ void APU_sweep__step()
 				uint16_t period = (APU_Pulse1_timer + 1) >> APU_Pulse1_sweepShiftCount;
 				if (APU_Pulse1_sweepNegate)
 				{
-					period = -period;
+					period = -1 - period;
 				}
 				period += APU_Pulse1_timer + 1;
 
@@ -1083,7 +1083,7 @@ void APU_sweep__step()
 				uint16_t period = (APU_Pulse2_timer + 1) >> APU_Pulse2_sweepShiftCount;
 				if (APU_Pulse2_sweepNegate)
 				{
-					period = -period + 1;
+					period = -period;
 				}
 				period += APU_Pulse2_timer + 1;
 
