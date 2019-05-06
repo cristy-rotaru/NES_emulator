@@ -207,7 +207,7 @@ static uint16_t APU_DMC_sampleLength;
 
 static uint16_t APU_DMC_rateCounter;
 static uint16_t APU_DMC_currentAddress;
-static uint16_t APU_DMC_counter;
+static uint8_t APU_DMC_counter;
 static uint8_t APU_DMC_output;
 static uint16_t APU_DMC_samplesRemaining;
 static bool APU_DMC_stopped;
