@@ -1,0 +1,11 @@
+*.pdb
+*.obj
+*.tlog
+*.lastbuildstate
+*.log
+*.html
+*.css
+NES_emulator/.vs/
+NES_emulator/libs/SFML/doc/
+NES_emulator/libs/SFML/examples/
+NES_emulator/libs/SDL-1.2.15/docs/
