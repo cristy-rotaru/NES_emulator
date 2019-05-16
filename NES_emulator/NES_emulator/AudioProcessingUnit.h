@@ -18,7 +18,7 @@ namespace APU
 	void writeRegisterTriangleTimerLow(uint8_t value);
 	void writeRegisterTriangleTimerHigh(uint8_t value);
 	void writeRegisterNoiseVolume(uint8_t value);
-	void writeRegisterNoiseLoop(uint8_t value);
+	void writeRegisterNoiseMode(uint8_t value);
 	void writeRegisterNoiseLength(uint8_t value);
 	void writeRegisterDMCFrequency(uint8_t value);
 	void writeRegisterDMCRaw(uint8_t value);

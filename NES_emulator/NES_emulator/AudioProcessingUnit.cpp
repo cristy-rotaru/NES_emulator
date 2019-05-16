@@ -195,7 +195,7 @@ static uint16_t APU_Noise_timerValue;
 static bool APU_Noise_lengthCounterHalt;
 static bool APU_Noise_constantVolume_envelopeFlag;
 static uint8_t APU_Noise_volume_envelopePeriod;
-static bool APU_Noise_loop;
+static bool APU_Noise_mode;
 static uint8_t APU_Noise_period;
 static uint8_t APU_Noise_lengthCounterLoad;
 
@@ -326,7 +326,7 @@ namespace APU
 		APU_Noise_lengthCounterHalt = false;
 		APU_Noise_constantVolume_envelopeFlag = false;
 		APU_Noise_volume_envelopePeriod = 0;
-		APU_Noise_loop = false;
+		APU_Noise_mode = false;
 		APU_Noise_period = 0;
 		APU_Noise_lengthCounterLoad = 0;
 
@@ -441,7 +441,7 @@ namespace APU
 		if (APU_Noise_timerValue == 0)
 		{
 			uint16_t newBit;
-			if (APU_Noise_loop)
+			if (APU_Noise_mode)
 			{
 				newBit = (APU_Noise_shiftRegister ^ (APU_Noise_shiftRegister >> 6)) & 1;
 			}
@@ -731,9 +731,9 @@ namespace APU
 		APU_Noise_volume_envelopePeriod = (value & APU__NOISE_VOLUME_ENVELOPE_PERIOD_MASK) >> APU__NOISE_VOLUME_ENVELOPE_PERIOD_SHIFT;
 	}
 
-	void writeRegisterNoiseLoop(uint8_t value)
+	void writeRegisterNoiseMode(uint8_t value)
 	{
-		APU_Noise_loop = (value & APU__NOISE_LOOP_MASK) ? true : false;
+		APU_Noise_mode = (value & APU__NOISE_LOOP_MASK) ? true : false;
 		APU_Noise_period = (value & APU__NOISE_PERIOD_MASK) >> APU__NOISE_PERIOD_SHIFT;
 	}
 

@@ -334,7 +334,7 @@ namespace MB
 
 				case MB__REGISTER_APU_NOISE_LOOP:
 				{
-					APU::writeRegisterNoiseLoop(data);
+					APU::writeRegisterNoiseMode(data);
 
 					break;
 				}
