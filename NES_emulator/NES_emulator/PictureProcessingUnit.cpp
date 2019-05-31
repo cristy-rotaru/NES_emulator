@@ -13,7 +13,8 @@
 #define PPU__SCANLINE_CYCLE_END (340u)
 #define PPU__SCANLINE_COUNT (240u)
 #define PPU__SCANLINE_DOTS (256u)
-#define PPU__SCANLINE_FRAME_END (261u)
+#define PPU__SCANLINE_FRAME_END_NTSC (261u)
+#define PPU__SCANLINE_FRAME_END_PAL (311u)
 
 #define PPU__PIPELINE_PRERENDER (0u)
 #define PPU__PIPELINE_RENDER (1u)
@@ -59,6 +60,7 @@ static uint8_t PPU_scanlineSprites[8];
 static int8_t PPU_scanlineSpriteCount = 0;
 
 static uint8_t PPU_pipelineStage;
+static uint16_t PPU_frameEnd;
 
 static uint16_t PPU_cycle;
 static uint16_t PPU_scanline;
@@ -122,10 +124,12 @@ namespace PPU
 		if (CR::getSystemType() == SYSTEM_NTSC)
 		{
 			PPU_paletteInUse = PPU_colorsNTSC;
+			PPU_frameEnd = PPU__SCANLINE_FRAME_END_NTSC;
 		}
 		else
 		{
 			PPU_paletteInUse = PPU_colorsPAL;
+			PPU_frameEnd = PPU__SCANLINE_FRAME_END_PAL;
 		}
 	}
 
@@ -384,7 +388,7 @@ namespace PPU
 
 					PPU_pipelineStage = PPU__PIPELINE_VERTICAL_BLANK;
 
-					RW::redraw(); // it takes 89079 or 89080 cycles between each frame
+					RW::redraw(); // it takes 89079 or 89080 cycles between each frame for NTSC
 				}
 
 				break;
@@ -412,7 +416,7 @@ namespace PPU
 					PPU_cycle = 0;
 				}
 
-				if (PPU_scanline >= PPU__SCANLINE_FRAME_END)
+				if (PPU_scanline >= PPU_frameEnd)
 				{
 					PPU_pipelineStage = PPU__PIPELINE_PRERENDER;
 					PPU_scanline = 0;
