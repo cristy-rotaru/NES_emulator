@@ -79,7 +79,7 @@ namespace CR
 			}
 		}
 
-		return (STATUS_CR_LOAD_SUCCES);
+		return (STATUS_CR_LOAD_SUCCESS);
 	}
 
 	uint8_t* getROM()
