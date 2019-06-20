@@ -1,5 +1,3 @@
-#include "debug.h"
-
 #include "AudioDevice.h"
 #include "AudioProcessingUnit.h"
 #include "CartridgeReader.h"
@@ -39,14 +37,9 @@ int main(int argc, char** argv)
 	{
 		std::cout << "One argument expected: path to ROM file" << std::endl;
 
+		getchar();
 		return (1);
 	}
-
-	debug("System: " << (int)CR::getSystemType(), DEBUG_LEVEL_INFO);
-	debug("Mapper: " << (int)CR::getMapperType(), DEBUG_LEVEL_INFO);
-	debug("PRG banks: " << (int)CR::getROMBankCount(), DEBUG_LEVEL_INFO);
-	debug("CHR banks: " << (int)CR::getVROMBankCount(), DEBUG_LEVEL_INFO);
-	debug("External RAM: " << CR::getBatteryBackedRAMAvailability(), DEBUG_LEVEL_INFO);
 
 	RW::init();
 	GC::init();
@@ -57,6 +50,7 @@ int main(int argc, char** argv)
 	{
 		std::cout << "Mapper " << (int)CR::getMapperType() << " not supported" << std::endl;
 
+		getchar();
 		return (1);
 	}
 
@@ -65,6 +59,7 @@ int main(int argc, char** argv)
 	{
 		std::cout << "An error accured while loading mapper info" << std::endl;
 
+		getchar();
 		return (1);
 	}
 

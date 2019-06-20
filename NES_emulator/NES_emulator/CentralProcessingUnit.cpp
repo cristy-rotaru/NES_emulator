@@ -2,8 +2,6 @@
 
 #include "MemoryBus.h"
 
-#include "debug.h"
-
 #define CPU__VECTOR_NMI (0xFFFAu)
 #define CPU__VECTOR_RESET (0xFFFCu)
 #define CPU__VECTOR_IRQ (0xFFFEu)
@@ -1082,10 +1080,6 @@ namespace CPU
 								break;
 							}
 						}
-					}
-					else
-					{
-						debug("Invalid opcode: " << std::hex << opcode, DEBUG_LEVEL_WARNING);
 					}
 				}
 			}

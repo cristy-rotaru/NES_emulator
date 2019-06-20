@@ -1,5 +1,3 @@
-#include "debug.h"
-
 #include "AudioDevice.h"
 
 #define SDL_MAIN_HANDLED //required by the audio library
@@ -71,7 +69,6 @@ void AD_streamLoader__loop()
 {
 	if (SDL_Init(SDL_INIT_AUDIO) < 0)
 	{
-		debug("Could not initialize audio library\n", DEBUG_LEVEL_WARNING);
 		return;
 	}
 

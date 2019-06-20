@@ -143,7 +143,6 @@
     <ClInclude Include="AudioProcessingUnit.h" />
     <ClInclude Include="CartridgeReader.h" />
     <ClInclude Include="CentralProcessingUnit.h" />
-    <ClInclude Include="debug.h" />
     <ClInclude Include="GameController.h" />
     <ClInclude Include="MemoryMapper.h" />
     <ClInclude Include="MemoryBus.h" />

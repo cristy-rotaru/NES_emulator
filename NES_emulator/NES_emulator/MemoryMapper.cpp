@@ -5,8 +5,6 @@
 #include "PictureProcessingUnit.h"
 #include "CentralProcessingUnit.h"
 
-#include "debug.h"
-
 #define MM__NO_MAPPER_SELECTED (0xFFFFu)
 
 #define MM__NAME_TABLE_HORIZONTAL (0x00u)

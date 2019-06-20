@@ -71,9 +71,6 @@
     <ClInclude Include="RenderingWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="debug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryMapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>

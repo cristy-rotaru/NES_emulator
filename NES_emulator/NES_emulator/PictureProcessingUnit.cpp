@@ -7,8 +7,6 @@
 
 #include <string>
 
-#include "debug.h"
-
 #define PPU__SCANLINE_CYCLE_LENGTH (341u)
 #define PPU__SCANLINE_CYCLE_END (340u)
 #define PPU__SCANLINE_COUNT (240u)
