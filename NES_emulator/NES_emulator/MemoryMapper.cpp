@@ -252,6 +252,8 @@ namespace MM
 
 			case MAPPER_MMC3:
 			{
+				return (false); // no longer supported
+
 				MM_busFunctions.writePRG = Mapper_MMC3__writePRG;
 				MM_busFunctions.readPRG = Mapper_MMC3__readPRG;
 				MM_busFunctions.writeCHR = Mapper_MMC3__writeCHR;
