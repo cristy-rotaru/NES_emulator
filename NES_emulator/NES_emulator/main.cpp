@@ -41,10 +41,6 @@ int main(int argc, char** argv)
 		return (1);
 	}
 
-	RW::init();
-	GC::init();
-	AD::init();
-
 	MM::init();
 	if (!MM::setMapper(CR::getMapperType()))
 	{
@@ -62,6 +58,10 @@ int main(int argc, char** argv)
 		getchar();
 		return (1);
 	}
+
+	RW::init();
+	GC::init();
+	AD::init();
 
 	APU::reset();
 	CPU::reset();
