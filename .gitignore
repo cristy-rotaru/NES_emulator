@@ -5,6 +5,7 @@
 *.log
 *.html
 *.css
+*.zip
 NES_emulator/.vs/
 NES_emulator/libs/SFML/doc/
 NES_emulator/libs/SFML/examples/
